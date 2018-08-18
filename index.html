@@ -7,23 +7,35 @@
 </head>
 
 <body>
-  <video src="http://r.dcs.redcdn.pl/http/o2/atendesoftware/portal/video/atendesoftware/atendesoftware2.mp4" controls autoplay></video>
+  <div class="player">
+    <video src="http://r.dcs.redcdn.pl/http/o2/atendesoftware/portal/video/atendesoftware/atendesoftware2.mp4" muted controls autoplay></video>
+    <div id="subs"></div>
+  </div>
+  <button type="button" name="button" onclick="document.querySelector('.player').mozRequestFullScreen()">fullscreen</button>
 </body>
 
 </html>
 
 <script type="text/javascript">
   let subitlesUrl = 'http://n-2-17.dcs.redcdn.pl/file/o2/atendesoftware/portal/video/atendesoftware/atendesoftware_2a.txt'
+  console.log(subitlesUrl);
 
   main()
 
-  let loop = setInterval(() => {
-    console.log(document.querySelector('video').currentTime);
-  }, 500)
 
   async function main() {
-    let subtitles = await getSubtitles(subitlesUrl)
-    parseSubtitles(subtitles)
+    let subtitles = parseSubtitles(await getSubtitles(subitlesUrl))
+    let subtitlesDOM = document.querySelector('#subs')
+
+    let loop = setInterval(() => {
+      let currentTime = document.querySelector('video').currentTime
+      let currentSub = subtitles.find((el) => {
+        return el.startTime < currentTime && el.endTime > currentTime
+      })
+      if (currentSub) {
+        subtitlesDOM.innerHTML = currentSub.textLine
+      } else subtitlesDOM.innerHTML = ''
+    }, 100)
   }
 
 
@@ -31,11 +43,72 @@
     let a = await fetch(url)
     return await a.text()
   }
+
   function parseSubtitles(text) {
+    let subtitles = []
     text = text.split('\n')
     for (var variable of text) {
-      console.log(variable.match());
-      let startTime =
+      if (variable.length !== 0) {
+        subtitle = {}
+        let times = variable.match(/(?:\d+[.:\d])+/g)
+        let [startTime, endTime] = times
+        subtitle.textLine = variable.substring(26)
+        startTime = startTime.split(':')
+        subtitle.startTime = startTime.reduceRight((acc, cv, i, arr) => {
+          return parseFloat(acc) + parseFloat(cv) * Math.pow(60, arr.length - i - 1)
+        })
+        endTime = endTime.split(':')
+        subtitle.endTime = endTime.reduceRight((acc, cv, i, arr) => {
+          return parseFloat(acc) + parseFloat(cv) * Math.pow(60, arr.length - i - 1)
+        })
+        subtitles.push(subtitle)
+      }
     }
+    return subtitles
   }
 </script>
+<style media="screen">
+  html,
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .player {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .player * {
+    /* position: absolute; */
+    box-sizing: border-box;
+  }
+
+  #subs {
+    align-self: flex-end;
+    transform: translateY(-50px);
+    font-size: 150%;
+    width: 80%;
+    color: white;
+    position: absolute;
+    z-index: 100;
+    background: #0005;
+    text-align: center;
+    visibility: visible;
+  }
+
+  video {
+    display: block;
+    /* position: absolute; */
+    z-index: 50;
+    overflow: hidden;
+    object-fit: contain;
+    width: 100%;
+    height: 100%;
+  }
+</style>
