@@ -14,7 +14,7 @@
       <button type="button" name="button" onclick="document.querySelector('video').play()">play</button>
       <button type="button" name="button" onclick="document.querySelector('video').pause()">pause</button>
       <input id="timeline" type="range" name="" value="" min="0" max="100" step="0.1">
-      <button type="button" name="button" onclick="document.querySelector('.player').mozRequestFullScreen()">fullscreen</button>
+      <button id="fullscreen" type="button" name="button">fullscreen</button>
     </div>
   </div>
 
@@ -36,6 +36,35 @@
     let timelineDOM = document.querySelector('#timeline')
     timelineDOM.onchange = function() {
       document.querySelector('video').currentTime = this.value / 100 * document.querySelector('video').duration
+    }
+    document.querySelector('#fullscreen').onclick = function() {
+      if (
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      ) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      } else {
+        element = document.querySelector('.player');
+        if (element.requestFullscreen) {
+          element.requestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+          element.mozRequestFullScreen();
+        } else if (element.webkitRequestFullscreen) {
+          element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        } else if (element.msRequestFullscreen) {
+          element.msRequestFullscreen();
+        }
+      }
     }
 
     let loop = setInterval(() => {
