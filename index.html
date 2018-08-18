@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title>redPlayer test</title>
+</head>
+
+<body>
+  <video src="http://r.dcs.redcdn.pl/http/o2/atendesoftware/portal/video/atendesoftware/atendesoftware2.mp4" controls autoplay></video>
+</body>
+
+</html>
+
+<script type="text/javascript">
+  let subitlesUrl = 'http://n-2-17.dcs.redcdn.pl/file/o2/atendesoftware/portal/video/atendesoftware/atendesoftware_2a.txt'
+
+  main()
+
+  let loop = setInterval(() => {
+    console.log(document.querySelector('video').currentTime);
+  }, 500)
+
+  async function main() {
+    let subtitles = await getSubtitles(subitlesUrl)
+    parseSubtitles(subtitles)
+  }
+
+
+  async function getSubtitles(url) {
+    let a = await fetch(url)
+    return await a.text()
+  }
+  function parseSubtitles(text) {
+    text = text.split('\n')
+    for (var variable of text) {
+      console.log(variable.match());
+      let startTime =
+    }
+  }
+</script>
