@@ -11,8 +11,8 @@
     <video src="http://r.dcs.redcdn.pl/http/o2/atendesoftware/portal/video/atendesoftware/atendesoftware2.mp4" autoplay></video>
     <div id="subs"></div>
     <div class="menu">
-      <button type="button" name="button" onclick="document.querySelector('video').play()">play</button>
-      <button type="button" name="button" onclick="document.querySelector('video').pause()">pause</button>
+      <button id="playButton" type="button" name="button">play</button>
+      <button id="pauseButton" type="button" name="button">pause</button>
       <input id="timeline" type="range" name="" value="" min="0" max="100" step="0.1">
       <button id="fullscreen" type="button" name="button">fullscreen</button>
     </div>
@@ -24,49 +24,26 @@
 
 <script type="text/javascript">
   let subitlesUrl = 'http://n-2-17.dcs.redcdn.pl/file/o2/atendesoftware/portal/video/atendesoftware/atendesoftware_2a.txt'
-  console.log(subitlesUrl);
 
   main()
 
-
   async function main() {
     let subtitles = parseSubtitles(await getSubtitles(subitlesUrl))
+
     let videoDOM = document.querySelector('video')
     let subtitlesDOM = document.querySelector('#subs')
     let timelineDOM = document.querySelector('#timeline')
+
+    // register timeline seek
     timelineDOM.onchange = function() {
       document.querySelector('video').currentTime = this.value / 100 * document.querySelector('video').duration
     }
-    document.querySelector('#fullscreen').onclick = function() {
-      if (
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.mozFullScreenElement ||
-        document.msFullscreenElement
-      ) {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-          document.mozCancelFullScreen();
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
-        }
-      } else {
-        element = document.querySelector('.player');
-        if (element.requestFullscreen) {
-          element.requestFullscreen();
-        } else if (element.mozRequestFullScreen) {
-          element.mozRequestFullScreen();
-        } else if (element.webkitRequestFullscreen) {
-          element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-        } else if (element.msRequestFullscreen) {
-          element.msRequestFullscreen();
-        }
-      }
-    }
+    // register button events
+    document.querySelector('#playButton').onclick = () => videoDOM.play()
+    document.querySelector('#pauseButton').onclick = () => videoDOM.pause()
+    document.querySelector('#fullscreen').onclick = toggleFullscreen
 
+    // start subtitles rendering loop
     let loop = setInterval(() => {
       let currentTime = videoDOM.currentTime
       let currentSub = subtitles.find((el) => {
@@ -80,10 +57,10 @@
     }, 100)
   }
 
-
+  // helper functions
   async function getSubtitles(url) {
-    let a = await fetch(url)
-    return await a.text()
+    let file = await fetch(url)
+    return file.text()
   }
 
   function parseSubtitles(text) {
@@ -96,19 +73,50 @@
         let [startTime, endTime] = times
         subtitle.textLine = variable.substring(26)
         startTime = startTime.split(':')
-        subtitle.startTime = startTime.reduceRight((acc, cv, i, arr) => {
-          return parseFloat(acc) + parseFloat(cv) * Math.pow(60, arr.length - i - 1)
-        })
+        subtitle.startTime = startTime.reduceRight(timeToSeconds)
         endTime = endTime.split(':')
-        subtitle.endTime = endTime.reduceRight((acc, cv, i, arr) => {
-          return parseFloat(acc) + parseFloat(cv) * Math.pow(60, arr.length - i - 1)
-        })
+        subtitle.endTime = endTime.reduceRight(timeToSeconds)
         subtitles.push(subtitle)
       }
     }
     return subtitles
   }
+
+  function timeToSeconds(acc, cv, i, arr) {
+    return parseFloat(acc) + parseFloat(cv) * Math.pow(60, arr.length - i - 1)
+  }
+
+  function toggleFullscreen() {
+    if (
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    ) {
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen()
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen()
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen()
+      }
+    } else {
+      element = document.querySelector('.player');
+      if (element.requestFullscreen) {
+        element.requestFullscreen()
+      } else if (element.mozRequestFullScreen) {
+        element.mozRequestFullScreen()
+      } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT)
+      } else if (element.msRequestFullscreen) {
+        element.msRequestFullscreen()
+      }
+    }
+  }
 </script>
+
 <style media="screen">
   html,
   body {
@@ -129,12 +137,10 @@
   }
 
   .player * {
-    /* position: absolute; */
     box-sizing: border-box;
   }
 
   #subs {
-    /* align-self: flex-end; */
     transform: translateY(-2.5em);
     font-size: 150%;
     max-width: 80%;
